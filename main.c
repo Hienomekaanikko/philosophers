@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:19:55 by msuokas           #+#    #+#             */
-/*   Updated: 2025/03/26 16:47:46 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/03/26 17:53:51 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void	*run_philo(void* arg)
 	return (NULL);
 }
 
-int	init_threads(t_data *data, char **argv)
+int	init_left_forks(t_data *data)
 {
 	int	i;
 
@@ -39,23 +39,52 @@ int	init_threads(t_data *data, char **argv)
 		data->philosophers[i].left_fork = malloc(sizeof(pthread_mutex_t));
 		if (!data->philosophers[i].left_fork)
 		{
-			printf("Malloc fail!\n");
+			printf("Malloc fail for philosopher %d's left fork!\n", data->philosophers[i].id);
 			return (0);
 		}
 		pthread_mutex_init(data->philosophers[i].left_fork, NULL);
+		printf("Assigning the left fork for philosopher %d to be at address: %p\n", data->philosophers[i].id, data->philosophers[i].left_fork);
+		i++;
+	}
+	return (1);
+}
+
+void	assign_right_forks(t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (i < data->nbr_of_philosophers)
+	{
 		if (i + 1 < data->nbr_of_philosophers)
 		{
-			printf("Assigning the left fork of philosopher %d 'fork address: %p' to be the right fork of philosopher %d\n", data->philosophers[i + 1].id, data->philosophers[i + 1].left_fork, data->philosophers[i].id);
+			printf("Assigning philosopher %d's left fork (address: %p) to be philosopher %d's right fork\n", data->philosophers[i + 1].id, data->philosophers[i + 1].left_fork, data->philosophers[i].id);
 			data->philosophers[i].right_fork = data->philosophers[i + 1].left_fork;
 		}
 		else
+		{
+			printf("Assigning philosopher %d's left fork (address: %p) to be philosopher %d's right fork\n", data->philosophers[0].id, data->philosophers[0].left_fork, data->philosophers[i].id);
 			data->philosophers[i].right_fork = data->philosophers[0].left_fork;
+		}
+		i++;
+	}
+}
+
+int init_threads(t_data *data, char **argv)
+{
+	int	i;
+
+	i = 0;
+	if (init_left_forks(data))
+		assign_right_forks(data);
+	while (i < data->nbr_of_philosophers)
+	{
 		data->philosophers[i].time_to_die = ft_atoi(argv[2]);
 		data->philosophers[i].time_to_eat = ft_atoi(argv[3]);
 		data->philosophers[i].time_to_sleep = ft_atoi(argv[4]);
 		if (pthread_create(&data->philosophers[i].thread, NULL, run_philo, &data->philosophers[i]) != 0)
 		{
-			printf("Thread creation failed\n");
+			printf("Thread creation failed for philosopher %d\n", data->philosophers[i].id);
 			return (0);
 		}
 		i++;
