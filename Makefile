@@ -1,4 +1,4 @@
-NAME	= philosophers
+NAME	= run
 LIBFT	= ./libft
 HEADERS	= -I ./includes -I ${LIBFT}
 LIBS	= ${LIBFT}/libft.a
