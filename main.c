@@ -87,6 +87,8 @@ void	*run_philo(void* arg)
 			usleep(philo->time_to_sleep * 1000);
 		}
 	}
+	pthread_mutex_destroy(philo->left_fork);
+	pthread_mutex_destroy(philo->right_fork);
 	return (NULL);
 }
 
@@ -174,6 +176,7 @@ void	init_data(t_data *data)
 {
 	data->nbr_of_philosophers = 0;
 	data->philosophers = NULL;
+	data->error = 0;
 }
 
 int check_fork_existance(t_data *data)
@@ -199,11 +202,13 @@ int	main(int argc, char **argv)
 	if (argc >= 5 && argc <= 6)
 	{
 		init_data(&data);
+		if (!validate_input(&data, argv))
+			return (1);
 		data.nbr_of_philosophers = ft_atoi(argv[1]);
 		data.philosophers = malloc(data.nbr_of_philosophers * sizeof(t_philosopher));
 		if (!data.philosophers)
 		{
-			printf("Malloc fail!\n");
+			error_message("ERROR: Malloc fail!", NULL);
 			return (1);
 		}
 		init_threads(&data, argc, argv);

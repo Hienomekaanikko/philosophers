@@ -42,11 +42,14 @@ typedef struct s_philosopher
 typedef struct s_data
 {
 	int				nbr_of_philosophers;
+	int				error;
 	t_philosopher	*philosophers;
 } t_data;
 
 //closing program / memory handling
 
 void	free_all(t_data *data);
+int		validate_input(t_data *data, char **argv);
+void	error_message(char *msg, char *arg);
 
 #endif
