@@ -1,11 +1,11 @@
-NAME	= run
+NAME	= philo
 LIBFT	= ./libft
 HEADERS	= -I ./includes -I ${LIBFT}
 LIBS	= ${LIBFT}/libft.a
 CC		= cc
 CFLAGS	= -Wall -Wextra -Werror
 
-SRC = main.c close_program.c parse_input.c error_handling.c init_data.c status_handling.c
+SRC = main.c close_program.c validate_input.c
 OBJS = $(SRC:.c=.o)
 
 all: $(NAME)
