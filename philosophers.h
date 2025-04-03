@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 14:40:48 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 15:00:55 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ typedef struct s_philosopher
 	time_t				curr_time;
 	time_t				starting_time;
 	time_t				last_meal;
+	int					meals;
 	int					dead_status;
 	int					max_meals;
 	int					id;

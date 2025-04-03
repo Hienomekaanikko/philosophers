@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:19:55 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 14:41:49 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 15:56:45 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@ void	*run_philo(void *arg)
 {
 	t_philosopher *philo = (t_philosopher *)arg;
 
-	think_lock(philo);
 	if (philo->data->nbr_of_philosophers == 1)
 	{
+		think_lock(philo);
 		single_eat_lock(philo);
 		philo->dead = 1;
 		philo->data->simulation_running = 0;
@@ -26,18 +26,21 @@ void	*run_philo(void *arg)
 	}
 	while (!philo->dead && philo->data->simulation_running)
 	{
-		if (!philo->data->simulation_running ||
-			timestamp(philo->starting_time) - philo->last_meal >= philo->time_to_die)
+		if (philo->max_meals >= 0)
 		{
-			if (philo->data->simulation_running)
+			if (philo->meals < philo->max_meals)
 			{
-				philo->dead = 1;
-				philo->data->simulation_running = 0;
+				think_lock(philo);
+				eat_lock(philo);
+				sleep_lock(philo);
 			}
-			break ;
 		}
-		eat_lock(philo);
-		sleep_lock(philo);
+		else
+		{
+			think_lock(philo);
+			eat_lock(philo);
+			sleep_lock(philo);
+		}
 	}
 	return (NULL);
 }
@@ -66,7 +69,7 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 	starting_time = init_time();
 	while (i < data->nbr_of_philosophers)
 	{
-		data->philosophers[i].max_meals = 0;
+		data->philosophers[i].max_meals = -1;
 		if (argc == 6)
 			data->philosophers[i].max_meals += ft_atoi(argv[5]);
 		data->philosophers[i].dead = 0;
@@ -77,6 +80,7 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 		data->philosophers[i].data = data;
 		data->philosophers[i].starting_time = starting_time;
 		data->philosophers[i].last_meal = starting_time;
+		data->philosophers[i].meals = 0;
 		i++;
 	}
 	return (1);
@@ -152,7 +156,13 @@ int init_data(t_data *data, int argc, char **argv)
 	data->error = 0;
 	data->simulation_running = 1;
 	data->nbr_of_philosophers = ft_atoi(argv[1]);
-	data->philosophers = malloc(data->nbr_of_philosophers * sizeof(t_philosopher));
+	if (data->nbr_of_philosophers > 0)
+		data->philosophers = malloc(data->nbr_of_philosophers * sizeof(t_philosopher));
+	else
+	{
+		error_message(" <- Number of philosophers cannot be negative!", argv[1]);
+		return (0);
+	}
 	pthread_mutex_init(&data->action_lock, NULL);
 	if (!data->philosophers)
 	{
