@@ -6,53 +6,38 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:19:55 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 13:44:52 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 14:41:49 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-void *run_philo(void *arg)
+void	*run_philo(void *arg)
 {
 	t_philosopher *philo = (t_philosopher *)arg;
 
+	think_lock(philo);
 	if (philo->data->nbr_of_philosophers == 1)
 	{
-		pthread_mutex_lock(&philo->left_fork);
-		printf("%lld %d has taken a fork\n", timestamp(philo->starting_time), philo->id);
-		usleep(philo->time_to_die * 1000);
-		pthread_mutex_unlock(&philo->left_fork);
-		printf("%lld %d died\n", timestamp(philo->starting_time), philo->id);
+		single_eat_lock(philo);
 		philo->dead = 1;
 		philo->data->simulation_running = 0;
 		return (NULL);
 	}
 	while (!philo->dead && philo->data->simulation_running)
 	{
-		pthread_mutex_lock(&philo->mutex);
 		if (!philo->data->simulation_running ||
 			timestamp(philo->starting_time) - philo->last_meal >= philo->time_to_die)
 		{
 			if (philo->data->simulation_running)
-				printf("%lld %d died\n", timestamp(philo->starting_time), philo->id);
-			philo->dead = 1;
-			pthread_mutex_unlock(&philo->mutex);
+			{
+				philo->dead = 1;
+				philo->data->simulation_running = 0;
+			}
 			break ;
 		}
-		pthread_mutex_unlock(&philo->mutex);
-		pthread_mutex_lock(&philo->left_fork);
-		pthread_mutex_lock(philo->right_fork);
-		printf("%lld %d has taken a fork\n", timestamp(philo->starting_time), philo->id);
-		pthread_mutex_lock(&philo->mutex);
-		printf("%lld %d is eating\n", timestamp(philo->starting_time), philo->id);
-		usleep(philo->time_to_eat * 1000); // Simulate eating
-		philo->last_meal = timestamp(philo->starting_time); // Update last meal time
-		pthread_mutex_unlock(&philo->mutex);
-		pthread_mutex_unlock(philo->right_fork);
-		pthread_mutex_unlock(&philo->left_fork);
-		printf("%lld %d is sleeping\n", timestamp(philo->starting_time), philo->id);
-		usleep(philo->time_to_sleep * 1000); // Simulate sleeping
-		printf("%lld %d is thinking\n", timestamp(philo->starting_time), philo->id);
+		eat_lock(philo);
+		sleep_lock(philo);
 	}
 	return (NULL);
 }
@@ -108,17 +93,16 @@ void *monitor(void *arg)
 		i = 0;
 		while (i < data->nbr_of_philosophers)
 		{
-			pthread_mutex_lock(&data->philosophers[i].mutex);
 			current_time = timestamp(data->philosophers[i].starting_time);
 			if (current_time - data->philosophers[i].last_meal >= data->philosophers[i].time_to_die)
 			{
+				pthread_mutex_lock(&data->action_lock);
 				printf("%lld %d died\n", current_time, data->philosophers[i].id);
+				pthread_mutex_unlock(&data->action_lock);
 				data->philosophers[i].dead = 1;
 				data->simulation_running = 0;
-				pthread_mutex_unlock(&data->philosophers[i].mutex);
 				return (NULL);
 			}
-			pthread_mutex_unlock(&data->philosophers[i].mutex);
 			i++;
 		}
 	}
@@ -169,6 +153,7 @@ int init_data(t_data *data, int argc, char **argv)
 	data->simulation_running = 1;
 	data->nbr_of_philosophers = ft_atoi(argv[1]);
 	data->philosophers = malloc(data->nbr_of_philosophers * sizeof(t_philosopher));
+	pthread_mutex_init(&data->action_lock, NULL);
 	if (!data->philosophers)
 	{
 		error_message("Malloc fail!", NULL);
@@ -177,8 +162,7 @@ int init_data(t_data *data, int argc, char **argv)
 	i = 0;
 	while (i < data->nbr_of_philosophers)
 	{
-		if (pthread_mutex_init(&data->philosophers[i].left_fork, NULL) != 0 ||
-			pthread_mutex_init(&data->philosophers[i].mutex, NULL) != 0)
+		if (pthread_mutex_init(&data->philosophers[i].left_fork, NULL) != 0)
 		{
 			error_message("Mutex init failed", NULL);
 			return (0);
@@ -219,7 +203,7 @@ int	main(int argc, char **argv)
 		return (0);
 	}
 	wait_for_finish(&data);
-	destroy_left_forks(&data);
+	destroy_mutexes(&data);
 	free_all(&data);
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 13:44:43 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 14:40:48 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,6 @@ typedef struct s_philosopher
 	pthread_mutex_t		left_fork;
 	pthread_mutex_t		*right_fork;
 	pthread_t			thread;
-	pthread_mutex_t		mutex;
 	time_t				time_to_die;
 	time_t				time_to_eat;
 	time_t				time_to_sleep;
@@ -48,9 +47,10 @@ typedef struct s_philosopher
 
 typedef struct s_data
 {
+	pthread_mutex_t		action_lock;
+	t_philosopher		*philosophers;
 	int					nbr_of_philosophers;
 	int					error;
-	t_philosopher		*philosophers;
 	int					simulation_running;
 } t_data;
 
@@ -66,7 +66,13 @@ void	error_message(char *msg, char *arg);
 
 // Shutting down
 void	free_all(t_data *data);
-void	destroy_left_forks(t_data *data);
+void	destroy_mutexes(t_data *data);
+
+// Locks and stuff
+void	think_lock(t_philosopher *philo);
+void	sleep_lock(t_philosopher *philo);
+void	eat_lock(t_philosopher *philo);
+void	single_eat_lock(t_philosopher *philo);
 
 #endif
 

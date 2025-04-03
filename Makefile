@@ -5,7 +5,7 @@ LIBS	= ${LIBFT}/libft.a
 CC		= cc
 CFLAGS	= -Wall -Wextra -Werror
 
-SRC = main.c utils.c validate_input.c time.c
+SRC = main.c utils.c validate_input.c time.c lock_action.c
 OBJS = $(SRC:.c=.o)
 
 all: $(NAME)
