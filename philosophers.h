@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/02 17:27:44 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 13:44:43 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,6 @@ typedef struct s_philosopher
 	pthread_mutex_t		*right_fork;
 	pthread_t			thread;
 	pthread_mutex_t		mutex;
-	time_t				left_fork_pickup_time;
-	time_t				right_fork_pickup_time;
 	time_t				time_to_die;
 	time_t				time_to_eat;
 	time_t				time_to_sleep;
@@ -56,11 +54,19 @@ typedef struct s_data
 	int					simulation_running;
 } t_data;
 
-// Function declarations
+// Starting
+int		validate_input(t_data *data, char **argv);
 
+// Time
+long long	timestamp(time_t starting_time);
+time_t		init_time(void);
+
+// Error
+void	error_message(char *msg, char *arg);
+
+// Shutting down
 void	free_all(t_data *data);
 void	destroy_left_forks(t_data *data);
-void	error_message(char *msg, char *arg);
-int		validate_input(t_data *data, char **argv);
+
 #endif
 

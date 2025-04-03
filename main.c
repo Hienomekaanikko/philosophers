@@ -6,52 +6,12 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:19:55 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/02 17:46:59 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/04/03 13:44:52 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-void	error_message(char *msg, char *arg)
-{
-	ft_putstr_fd("ERROR: ", 2);
-	ft_putstr_fd(arg, 2);
-	ft_putendl_fd(msg, 2);
-}
-
-long long timestamp(time_t starting_time)
-{
-	struct timeval	current_time;
-	long long		current_time_ms;
-	long long		elapsed_ms;
-
-	gettimeofday(&current_time, NULL);
-	current_time_ms = (current_time.tv_sec * 1000) + (current_time.tv_usec / 1000);
-	elapsed_ms = current_time_ms - starting_time;
-
-	return (elapsed_ms);
-}
-
-time_t	init_time(void)
-{
-	struct timeval	start;
-
-	gettimeofday(&start, NULL);
-	return((start.tv_sec * 1000) + (start.tv_usec / 1000));
-}
-
-int	is_dead(void *arg, time_t comparison_point)
-{
-	t_philosopher	*philo;
-
-	philo = (t_philosopher*)arg;
-	if (timestamp(philo->starting_time) - comparison_point >= philo->time_to_die)
-	{
-		printf("%lld %d died\n", timestamp(philo->starting_time), philo->id);
-		return (1);
-	}
-	return (0);
-}
 void *run_philo(void *arg)
 {
 	t_philosopher *philo = (t_philosopher *)arg;
@@ -81,11 +41,9 @@ void *run_philo(void *arg)
 		}
 		pthread_mutex_unlock(&philo->mutex);
 		pthread_mutex_lock(&philo->left_fork);
-		printf("%lld %d has taken a fork\n", timestamp(philo->starting_time), philo->id);
 		pthread_mutex_lock(philo->right_fork);
 		printf("%lld %d has taken a fork\n", timestamp(philo->starting_time), philo->id);
 		pthread_mutex_lock(&philo->mutex);
-		printf("%d ate last time at %ld\n", philo->id, philo->last_meal);
 		printf("%lld %d is eating\n", timestamp(philo->starting_time), philo->id);
 		usleep(philo->time_to_eat * 1000); // Simulate eating
 		philo->last_meal = timestamp(philo->starting_time); // Update last meal time
@@ -109,14 +67,9 @@ void assign_right_forks(t_data *data)
 			data->philosophers[i].right_fork = &data->philosophers[i + 1].left_fork;
 		else
 			data->philosophers[i].right_fork = &data->philosophers[0].left_fork;
-
-		printf("Philosopher %d:\n", i + 1);
-		printf("    Left Fork Address: %p\n", &data->philosophers[i].left_fork);
-		printf("    Right Fork Address: %p\n", data->philosophers[i].right_fork);
 		i++;
 	}
 }
-
 
 int	init_philo_data(t_data *data, int argc, char **argv)
 {
@@ -128,7 +81,6 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 	starting_time = init_time();
 	while (i < data->nbr_of_philosophers)
 	{
-		memset(&data->philosophers[i], 0, sizeof(t_philosopher));
 		data->philosophers[i].max_meals = 0;
 		if (argc == 6)
 			data->philosophers[i].max_meals += ft_atoi(argv[5]);
@@ -209,7 +161,7 @@ void	wait_for_finish(t_data *data)
 		i++;
 	}
 }
-int init_data(t_data *data, char **argv)
+int init_data(t_data *data, int argc, char **argv)
 {
 	int i;
 
@@ -233,11 +185,11 @@ int init_data(t_data *data, char **argv)
 		}
 		i++;
 	}
-	assign_right_forks(data); // Ensure correct fork assignment
+	assign_right_forks(data);
+	if (!init_philo_data(data, argc, argv))
+		free_all(data);
 	return (1);
 }
-
-
 
 static int	arg_check(int argc)
 {
@@ -259,16 +211,13 @@ int	main(int argc, char **argv)
 {
 	t_data			data;
 
-	if (!arg_check(argc) || !init_data(&data, argv))
+	if (!arg_check(argc) || !init_data(&data, argc, argv) || !validate_input(&data, argv))
 		return (1);
-	if (!validate_input(&data, argv))
-		return (1);
-	if (!init_philo_data(&data, argc, argv))
+	if (!init_threads(&data))
 	{
 		free_all(&data);
-		return (1);
+		return (0);
 	}
-	init_threads(&data);
 	wait_for_finish(&data);
 	destroy_left_forks(&data);
 	free_all(&data);
