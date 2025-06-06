@@ -12,6 +12,21 @@
 
 #include "philosophers.h"
 
+
+void precise_usleep(long microseconds)
+{
+    struct timeval start, current;
+    long elapsed;
+
+    gettimeofday(&start, NULL);
+    do {
+        gettimeofday(&current, NULL);
+        elapsed = (current.tv_sec - start.tv_sec) * 1000000L
+                + (current.tv_usec - start.tv_usec);
+        usleep(100); // Reduce CPU usage
+    } while (elapsed < microseconds);
+}
+
 long long timestamp(time_t starting_time)
 {
 	struct timeval	current_time;

@@ -48,32 +48,35 @@ typedef struct s_philosopher
 
 typedef struct s_data
 {
-	pthread_mutex_t		action_lock;
-	t_philosopher		*philosophers;
-	int					nbr_of_philosophers;
-	int					error;
-	int					simulation_running;
+	pthread_mutex_t	action_lock;
+	pthread_mutex_t	meal_lock;
+	t_philosopher	*philosophers;
+	int				nbr_of_philosophers;
+	int				meals_required;
+	int				meals_completed;
+	int				error;
+	int				simulation_running;
 } t_data;
 
-// Starting
-int		validate_input(t_data *data, char **argv);
+void		precise_usleep(long microseconds);
+int			validate_input(t_data *data, char **argv);
 
 // Time
 long long	timestamp(time_t starting_time);
 time_t		init_time(void);
 
 // Error
-void	error_message(char *msg, char *arg);
+void		error_message(char *msg, char *arg);
 
 // Shutting down
-void	free_all(t_data *data);
-void	destroy_mutexes(t_data *data);
+void		free_all(t_data *data);
+void		destroy_mutexes(t_data *data);
 
 // Locks and stuff
-void	think_lock(t_philosopher *philo);
-void	sleep_lock(t_philosopher *philo);
-void	eat_lock(t_philosopher *philo);
-void	single_eat_lock(t_philosopher *philo);
+void		think_lock(t_philosopher *philo);
+void		sleep_lock(t_philosopher *philo);
+void		eat_lock(t_philosopher *philo);
+void		single_eat_lock(t_philosopher *philo);
 
 #endif
 

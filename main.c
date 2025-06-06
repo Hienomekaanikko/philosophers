@@ -14,41 +14,31 @@
 
 void	*run_philo(void *arg)
 {
-	t_philosopher *philo = (t_philosopher *)arg;
+	t_philosopher	*philo;
 
+	philo = (t_philosopher *)arg;
 	if (philo->data->nbr_of_philosophers == 1)
 	{
 		think_lock(philo);
 		single_eat_lock(philo);
-		philo->dead = 1;
-		philo->data->simulation_running = 0;
 		return (NULL);
 	}
 	while (!philo->dead && philo->data->simulation_running)
 	{
-		if (philo->max_meals >= 0)
-		{
-			if (philo->meals < philo->max_meals)
-			{
-				think_lock(philo);
-				eat_lock(philo);
-				sleep_lock(philo);
-			}
-		}
-		else
-		{
-			think_lock(philo);
-			eat_lock(philo);
-			sleep_lock(philo);
-		}
+		think_lock(philo);
+		eat_lock(philo);
+		sleep_lock(philo);
+		if (philo->max_meals > 0 && philo->meals >= philo->max_meals)
+			break;
 	}
 	return (NULL);
 }
 
 void assign_right_forks(t_data *data)
 {
-	int i = 0;
+	int	i;
 
+	i = 0;
 	while (i < data->nbr_of_philosophers)
 	{
 		if (i + 1 < data->nbr_of_philosophers)
@@ -71,7 +61,7 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 	{
 		data->philosophers[i].max_meals = -1;
 		if (argc == 6)
-			data->philosophers[i].max_meals += ft_atoi(argv[5]);
+			data->philosophers[i].max_meals = ft_atoi(argv[5]);
 		data->philosophers[i].dead = 0;
 		data->philosophers[i].time_to_die = ft_atoi(argv[2]);
 		data->philosophers[i].time_to_eat = ft_atoi(argv[3]);
@@ -88,31 +78,38 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 
 void *monitor(void *arg)
 {
-	t_data *data = (t_data *)arg;
-	int i;
-	long long current_time;
+	t_data		*data;
+	int			i;
+	long long	current_time;
+	long long	last_meal;
+	int			time_to_die;
 
+	data = (t_data *)arg;
 	while (data->simulation_running)
 	{
 		i = 0;
 		while (i < data->nbr_of_philosophers)
 		{
+			pthread_mutex_lock(&data->action_lock);
 			current_time = timestamp(data->philosophers[i].starting_time);
-			if (current_time - data->philosophers[i].last_meal >= data->philosophers[i].time_to_die)
+			last_meal = data->philosophers[i].last_meal; // 🕒 Atomic read
+			time_to_die = data->philosophers[i].time_to_die;
+			pthread_mutex_unlock(&data->action_lock);
+			if (current_time - last_meal >= time_to_die)
 			{
 				pthread_mutex_lock(&data->action_lock);
-				printf("%lld %d died\n", current_time, data->philosophers[i].id);
-				pthread_mutex_unlock(&data->action_lock);
-				data->philosophers[i].dead = 1;
+				if (data->simulation_running) // Prevent duplicate death prints
+					printf("%lld %d died\n", current_time, data->philosophers[i].id);
 				data->simulation_running = 0;
+				pthread_mutex_unlock(&data->action_lock);
 				return (NULL);
 			}
 			i++;
 		}
+		usleep(100);
 	}
 	return (NULL);
 }
-
 
 int	init_threads(t_data *data)
 {
@@ -151,7 +148,7 @@ void	wait_for_finish(t_data *data)
 }
 int init_data(t_data *data, int argc, char **argv)
 {
-	int i;
+	int	i;
 
 	data->error = 0;
 	data->simulation_running = 1;
@@ -164,6 +161,9 @@ int init_data(t_data *data, int argc, char **argv)
 		return (0);
 	}
 	pthread_mutex_init(&data->action_lock, NULL);
+	data->meals_required = (argc == 6) ? ft_atoi(argv[5]) : -1;
+	data->meals_completed = 0;
+	pthread_mutex_init(&data->meal_lock, NULL);
 	if (!data->philosophers)
 	{
 		error_message("Malloc fail!", NULL);
@@ -203,7 +203,7 @@ static int	arg_check(int argc)
 
 int	main(int argc, char **argv)
 {
-	t_data			data;
+	t_data	data;
 
 	if (!arg_check(argc) || !init_data(&data, argc, argv) || !validate_input(&data, argv))
 		return (1);
