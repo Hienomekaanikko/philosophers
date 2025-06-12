@@ -6,46 +6,63 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:19:55 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 15:56:45 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/12 17:41:47 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
+int	all_philosophers_ate_enough(t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (i < data->nbr_of_philosophers)
+	{
+		if (data->philosophers[i].max_meals >= 0 && data->philosophers[i].meals <= data->philosophers[i].max_meals)
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
 void	*run_philo(void *arg)
 {
-	t_philosopher *philo = (t_philosopher *)arg;
+	t_philosopher *philo;
 
+	philo = (t_philosopher *)arg;
 	if (philo->data->nbr_of_philosophers == 1)
 	{
-		think_lock(philo);
-		single_eat_lock(philo);
-		philo->dead = 1;
-		philo->data->simulation_running = 0;
+		pthread_mutex_lock(&philo->left_fork);
+		print_status(philo, "has taken a fork");
+		usleep(philo->time_to_die * 1000);
+		pthread_mutex_unlock(&philo->left_fork);
 		return (NULL);
 	}
 	while (!philo->dead && philo->data->simulation_running)
 	{
 		if (philo->max_meals >= 0)
 		{
-			if (philo->meals < philo->max_meals)
+			if (philo->meals <= philo->max_meals)
 			{
-				think_lock(philo);
 				eat_lock(philo);
 				sleep_lock(philo);
+				print_status(philo, "is thinking");
 			}
+			else
+				return (NULL);
 		}
 		else
 		{
-			think_lock(philo);
 			eat_lock(philo);
 			sleep_lock(philo);
+			print_status(philo, "is thinking");
 		}
 	}
 	return (NULL);
 }
 
-void assign_right_forks(t_data *data)
+void	assign_right_forks(t_data *data)
 {
 	int i = 0;
 
@@ -79,26 +96,31 @@ int	init_philo_data(t_data *data, int argc, char **argv)
 		data->philosophers[i].id = i + 1;
 		data->philosophers[i].data = data;
 		data->philosophers[i].starting_time = starting_time;
-		data->philosophers[i].last_meal = starting_time;
+		data->philosophers[i].last_meal = 0;
 		data->philosophers[i].meals = 0;
 		i++;
 	}
 	return (1);
 }
 
-void *monitor(void *arg)
+void	*monitor(void *arg)
 {
-	t_data *data = (t_data *)arg;
-	int i;
-	long long current_time;
+	t_data		*data;
+	int			i;
+	long long	current_time;
+	long long	time_since_meal;
 
+	data = (t_data *)arg;
 	while (data->simulation_running)
 	{
 		i = 0;
 		while (i < data->nbr_of_philosophers)
 		{
+			pthread_mutex_lock(&data->philosophers[i].last_meal_lock);
 			current_time = timestamp(data->philosophers[i].starting_time);
-			if (current_time - data->philosophers[i].last_meal >= data->philosophers[i].time_to_die)
+			time_since_meal = current_time - data->philosophers[i].last_meal;
+			pthread_mutex_unlock(&data->philosophers[i].last_meal_lock);
+			if (time_since_meal >= data->philosophers[i].time_to_die)
 			{
 				pthread_mutex_lock(&data->action_lock);
 				printf("%lld %d died\n", current_time, data->philosophers[i].id);
@@ -109,6 +131,15 @@ void *monitor(void *arg)
 			}
 			i++;
 		}
+		if (data->nbr_of_philosophers > 1 && data->philosophers->max_meals != -1)
+		{
+			if (all_philosophers_ate_enough(data))
+			{
+				data->simulation_running = 0;
+				return (NULL);
+			}
+		}
+		usleep(1000);
 	}
 	return (NULL);
 }
@@ -149,9 +180,9 @@ void	wait_for_finish(t_data *data)
 		i++;
 	}
 }
-int init_data(t_data *data, int argc, char **argv)
+int	init_data(t_data *data, int argc, char **argv)
 {
-	int i;
+	int	i;
 
 	data->error = 0;
 	data->simulation_running = 1;
@@ -203,9 +234,10 @@ static int	arg_check(int argc)
 
 int	main(int argc, char **argv)
 {
-	t_data			data;
+	t_data	data;
 
-	if (!arg_check(argc) || !init_data(&data, argc, argv) || !validate_input(&data, argv))
+	if (!arg_check(argc) || !init_data(&data, argc, argv)
+		|| !validate_input(&data, argv))
 		return (1);
 	if (!init_threads(&data))
 	{

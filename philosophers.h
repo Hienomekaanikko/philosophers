@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 15:00:55 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/12 17:38:28 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ typedef struct s_philosopher
 {
 	pthread_mutex_t		left_fork;
 	pthread_mutex_t		*right_fork;
+	pthread_mutex_t		last_meal_lock;
 	pthread_t			thread;
 	time_t				time_to_die;
 	time_t				time_to_eat;
@@ -70,7 +71,7 @@ void	free_all(t_data *data);
 void	destroy_mutexes(t_data *data);
 
 // Locks and stuff
-void	think_lock(t_philosopher *philo);
+void	print_status(t_philosopher *philo, char *msg);
 void	sleep_lock(t_philosopher *philo);
 void	eat_lock(t_philosopher *philo);
 void	single_eat_lock(t_philosopher *philo);
