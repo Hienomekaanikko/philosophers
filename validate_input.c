@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/02 16:07:08 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/02 16:15:05 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/16 15:12:21 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,11 @@ static int	check_limits(t_data *data, char *arg)
 
 int	validate_input(t_data *data, char **argv)
 {
-	int			i;
-	int			j;
+	int	i;
+	int	j;
 
 	i = 1;
+	data->error = 0;
 	while (argv[i])
 	{
 		j = 0;

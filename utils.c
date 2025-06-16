@@ -6,27 +6,66 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 13:10:21 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 14:16:31 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/16 14:16:24 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-void	free_all(t_data *data)
+int	arg_check(int argc)
 {
-	free(data->philosophers);
+	if (argc > 6 || argc < 5)
+	{
+		ft_putendl_fd("ERROR!", 2);
+		ft_putstr_fd("Input arguments like this: ", 2);
+		ft_putstr_fd(ARG1, 2);
+		ft_putstr_fd(ARG2, 2);
+		ft_putstr_fd(ARG3, 2);
+		ft_putstr_fd(ARG4, 2);
+		ft_putendl_fd(ARG5, 2);
+		return (0);
+	}
+	return (1);
 }
 
-void destroy_mutexes(t_data *data)
+int	is_space(char *cmd)
 {
-	int i = 0;
+	int	i;
 
-	while (i < data->nbr_of_philosophers)
+	i = 0;
+	while (cmd[i])
 	{
-		pthread_mutex_destroy(&data->philosophers[i].left_fork);
-		i++;
+		if (ft_isspace(cmd[i]))
+			i++;
+		else
+			return (0);
 	}
-	pthread_mutex_destroy(&data->action_lock);
+	return (1);
+}
+
+long long	ft_atol(const char *s)
+{
+	long long	result;
+	long long	sign;
+
+	result = 0;
+	sign = 1;
+	while (*s == ' ' || *s == '\t' || *s == '\n' || \
+			*s == '\r' || *s == '\f' || *s == '\v')
+		s++;
+	if (*s == '-' || *s == '+')
+	{
+		if (*s == '-')
+			sign = -1;
+		s++;
+	}
+	while (ft_isdigit(*s))
+	{
+		if (result > (LLONG_MAX - (*s - '0')) / 10)
+			return (result * sign);
+		result = result * 10 + (*s++ - '0');
+	}
+	return (result * sign);
 }
 
 void	error_message(char *msg, char *arg)

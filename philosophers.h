@@ -6,20 +6,20 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 15:00:55 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/16 16:07:01 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILOSOPHERS_H
 # define PHILOSOPHERS_H
 
-# include "libft/libft.h"
 # include <string.h>
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <sys/time.h>
 # include <pthread.h>
+# include <limits.h>
 
 # define ARG1	"number_of_philosophers, "
 # define ARG2	"time_to_die, "
@@ -31,52 +31,48 @@ typedef struct s_philosopher
 {
 	pthread_mutex_t		left_fork;
 	pthread_mutex_t		*right_fork;
-	pthread_t			thread;
-	time_t				time_to_die;
-	time_t				time_to_eat;
-	time_t				time_to_sleep;
-	time_t				curr_time;
-	time_t				starting_time;
-	time_t				last_meal;
-	int					meals;
-	int					dead_status;
-	int					max_meals;
 	int					id;
+	int					time_to_die;
+	int					time_to_sleep;
+	int					time_to_eat;
+	int					last_meal_time;
 	int					dead;
 	struct s_data		*data;
 } t_philosopher;
 
 typedef struct s_data
 {
-	pthread_mutex_t	action_lock;
-	pthread_mutex_t	meal_lock;
-	t_philosopher	*philosophers;
-	int				nbr_of_philosophers;
-	int				meals_required;
-	int				meals_completed;
+	t_philosopher	*philo;
+	pthread_t		*threads;
+	long long		starting_time;
+	int				nbr_of_philos;
 	int				error;
-	int				simulation_running;
+	int				stop_simulation;
+	int				time_to_eat;
+	int				time_to_sleep;
+	int				time_to_die;
 } t_data;
 
-void		precise_usleep(long microseconds);
-int			validate_input(t_data *data, char **argv);
+// Parsing
+int			ft_isnum(char *num);
+int			is_space(char *cmd);
+long long	ft_atol(const char *s);
+int			ft_isdigit(int c);
+int			ft_isspace(int c);
+int			arg_check(int argc);
+
+// Starting
+int		validate_input(t_data *data, char **argv);
+int		run_simulation(t_data *data);
 
 // Time
-long long	timestamp(time_t starting_time);
-time_t		init_time(void);
+long long	timestamp(long long starting_time);
+long long	init_time(void);
 
 // Error
-void		error_message(char *msg, char *arg);
-
-// Shutting down
-void		free_all(t_data *data);
-void		destroy_mutexes(t_data *data);
-
-// Locks and stuff
-void		think_lock(t_philosopher *philo);
-void		sleep_lock(t_philosopher *philo);
-void		eat_lock(t_philosopher *philo);
-void		single_eat_lock(t_philosopher *philo);
+void	error_message(char *msg, char *arg);
+void	ft_putendl_fd(char *s, int fd);
+void	ft_putstr_fd(const char *s, int fd);
 
 #endif
 

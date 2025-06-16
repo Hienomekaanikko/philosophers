@@ -6,28 +6,13 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 13:08:44 by msuokas           #+#    #+#             */
-/*   Updated: 2025/04/03 13:09:06 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/16 15:59:38 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-
-void precise_usleep(long microseconds)
-{
-    struct timeval start, current;
-    long elapsed;
-
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&current, NULL);
-        elapsed = (current.tv_sec - start.tv_sec) * 1000000L
-                + (current.tv_usec - start.tv_usec);
-        usleep(100); // Reduce CPU usage
-    } while (elapsed < microseconds);
-}
-
-long long timestamp(time_t starting_time)
+long long	timestamp(long long starting_time)
 {
 	struct timeval	current_time;
 	long long		current_time_ms;
@@ -36,14 +21,13 @@ long long timestamp(time_t starting_time)
 	gettimeofday(&current_time, NULL);
 	current_time_ms = (current_time.tv_sec * 1000) + (current_time.tv_usec / 1000);
 	elapsed_ms = current_time_ms - starting_time;
-
 	return (elapsed_ms);
 }
 
-time_t	init_time(void)
+long long init_time(void)
 {
 	struct timeval	start;
 
 	gettimeofday(&start, NULL);
-	return((start.tv_sec * 1000) + (start.tv_usec / 1000));
+	return ((start.tv_sec * 1000) + (start.tv_usec / 1000));
 }

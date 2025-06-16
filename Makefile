@@ -1,33 +1,23 @@
 NAME	= philo
-LIBFT	= ./libft
-HEADERS	= -I ./includes -I ${LIBFT}
-LIBS	= ${LIBFT}/libft.a
 CC		= cc
 CFLAGS	= -Wall -Wextra -Werror
 
-SRC = main.c utils.c validate_input.c time.c lock_action.c
-OBJS = $(SRC:.c=.o)
+SRC		= main.c utils.c utils2.c validate_input.c time.c simulation.c
+OBJS	= $(SRC:.c=.o)
 
 all: $(NAME)
 
-$(LIBS):
-	$(MAKE) -C $(LIBFT)
-
-$(OBJS): $(LIBS)
-
-$(NAME): $(OBJS) $(LIBS)
-	$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $(NAME)
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
-	$(MAKE) -C $(LIBFT) clean
 
 fclean: clean
 	rm -f $(NAME)
-	$(MAKE) -C $(LIBFT) fclean
 
 re: fclean all
 
