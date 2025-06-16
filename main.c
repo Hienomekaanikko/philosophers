@@ -14,33 +14,39 @@
 
 static int	init_philosopher(t_philosopher *philo, t_data *data, pthread_mutex_t *right_fork)
 {
-	if (pthread_mutex_init(&philo->left_fork, NULL) != 0)
-	{
-		printf("Failed to initialize fork mutex\n");
-		return (0);
-	}
+	pthread_mutex_init(&philo->last_meal_mutex, NULL);
 	philo->right_fork = right_fork;
 	philo->dead = 0;
 	philo->data = data;
 	philo->time_to_die = data->time_to_die;
 	philo->time_to_sleep = data->time_to_sleep;
 	philo->time_to_eat = data->time_to_eat;
-	philo->last_meal_time = 0;
+	philo->last_meal_time = data->starting_time;
 	return (1);
 }
 
+
 static int	init_philos(t_data *data)
 {
-	pthread_mutex_t	*right_fork;
-	int				i;
+	int	i;
 
 	i = 0;
 	while (i < data->nbr_of_philos)
 	{
-		right_fork = &data->philo[(i + 1) % data->nbr_of_philos].left_fork;
+		if (pthread_mutex_init(&data->philo[i].left_fork, NULL) != 0)
+		{
+			printf("Failed to initialize fork mutex\n");
+			return (0);
+		}
+		i++;
+	}
+	i = 0;
+	while (i < data->nbr_of_philos)
+	{
+		pthread_mutex_t *right_fork = &data->philo[(i + 1) % data->nbr_of_philos].left_fork;
 		if (!init_philosopher(&data->philo[i], data, right_fork))
 			return (0);
-		data->philo[i].id = i;
+		data->philo[i].id = i + 1;
 		i++;
 	}
 	return (1);
@@ -48,6 +54,7 @@ static int	init_philos(t_data *data)
 
 static int	init_base(t_data *data, char **argv)
 {
+	pthread_mutex_init(&data->stop_mutex, NULL);
 	data->time_to_die = ft_atol(argv[2]);
 	data->time_to_sleep = ft_atol(argv[4]);
 	data->time_to_eat = ft_atol(argv[3]);
@@ -70,6 +77,7 @@ int	main(int argc, char **argv)
 		return (1);
 	if (!init_philos(&data))
 		return (1);
+	data.starting_time = init_time();
 	if (run_simulation(&data))
 		return (1);
 	free(data.philo);

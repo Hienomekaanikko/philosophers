@@ -31,11 +31,12 @@ typedef struct s_philosopher
 {
 	pthread_mutex_t		left_fork;
 	pthread_mutex_t		*right_fork;
+	pthread_mutex_t		last_meal_mutex;
 	int					id;
 	int					time_to_die;
 	int					time_to_sleep;
 	int					time_to_eat;
-	int					last_meal_time;
+	long long			last_meal_time;
 	int					dead;
 	struct s_data		*data;
 } t_philosopher;
@@ -44,6 +45,7 @@ typedef struct s_data
 {
 	t_philosopher	*philo;
 	pthread_t		*threads;
+	pthread_mutex_t	stop_mutex;
 	long long		starting_time;
 	int				nbr_of_philos;
 	int				error;
@@ -64,6 +66,7 @@ int			arg_check(int argc);
 // Starting
 int		validate_input(t_data *data, char **argv);
 int		run_simulation(t_data *data);
+void	*monitor_routine(void *arg);
 
 // Time
 long long	timestamp(long long starting_time);
