@@ -6,11 +6,21 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/17 16:04:34 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/17 16:23:58 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 17:10:53 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
+
+int	no_philos(t_data *data)
+{
+	if (data->nbr_of_philos == 0)
+	{
+		data->msg = "You must have atleast 1 philo";
+		return (1);
+	}
+	return (0);
+}
 
 int	init_mutex(t_data *data, pthread_mutex_t *mutex)
 {
@@ -46,11 +56,8 @@ int	init_philos(t_data *data)
 	int				i;
 
 	i = 0;
-	if (data->nbr_of_philos == 0)
-	{
-		data->msg = "You must have atleast 1 philo";
+	if (no_philos(data))
 		return (0);
-	}
 	while (i < data->nbr_of_philos)
 	{
 		if (!init_mutex(data, &data->philo[i].left_fork))
