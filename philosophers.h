@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/16 16:07:01 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 11:36:11 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ typedef struct s_philosopher
 	int					time_to_die;
 	int					time_to_sleep;
 	int					time_to_eat;
+	int					max_meals;
+	int					meals_eaten;
 	long long			last_meal_time;
 	int					dead;
 	struct s_data		*data;
@@ -53,6 +55,7 @@ typedef struct s_data
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				time_to_die;
+	int				max_meals;
 } t_data;
 
 // Parsing
@@ -65,7 +68,7 @@ int			arg_check(int argc);
 
 // Starting
 int		validate_input(t_data *data, char **argv);
-int		run_simulation(t_data *data);
+void	run_simulation(t_data *data);
 void	*monitor_routine(void *arg);
 
 // Time

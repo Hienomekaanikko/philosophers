@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 14:56:33 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/16 16:20:05 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 11:57:31 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,13 +29,28 @@ void	*monitor_routine(void *arg)
 {
 	t_data		*data = (t_data *)arg;
 	int			i;
+	int			all_ate;
 	long long	current_time;
 
+	all_ate = 0;
 	while (1)
 	{
 		i = 0;
+		if (all_ate == 1)
+			break ;
+		pthread_mutex_lock(&data->stop_mutex);
+		if (data->stop_simulation == 1)
+			break ;
+		pthread_mutex_unlock(&data->stop_mutex);
 		while (i < data->nbr_of_philos)
 		{
+			if (data->max_meals > 0 && data->nbr_of_philos > 1)
+			{
+				if (data->philo->meals_eaten == data->max_meals)
+					all_ate = 1;
+				else
+					all_ate = 0;
+			}
 			pthread_mutex_lock(&data->philo[i].last_meal_mutex);
 			current_time = timestamp(data->starting_time);
 			if (current_time - data->philo[i].last_meal_time > data->time_to_die)
@@ -43,7 +58,7 @@ void	*monitor_routine(void *arg)
 				pthread_mutex_lock(&data->stop_mutex);
 				data->stop_simulation = 1;
 				pthread_mutex_unlock(&data->stop_mutex);
-				printf("%lld %d died\n", current_time, data->philo[i].id);
+				print_action(&data->philo[i], "died");
 				pthread_mutex_unlock(&data->philo[i].last_meal_mutex);
 				return (NULL);
 			}
@@ -63,11 +78,16 @@ static void eater(t_philosopher *philo)
 	if (philo->id % 2 == 0)
 	{
 		pthread_mutex_lock(&philo->left_fork);
+		print_action(philo, "has taken a fork");
 		pthread_mutex_lock(philo->right_fork);
-	} else
+		print_action(philo, "has taken a fork");
+	}
+	else
 	{
 		pthread_mutex_lock(philo->right_fork);
+		print_action(philo, "has taken a fork");
 		pthread_mutex_lock(&philo->left_fork);
+		print_action(philo, "has taken a fork");
 	}
 	current_time = timestamp(philo->data->starting_time);
 	print_action(philo, "is eating");
@@ -93,29 +113,44 @@ static void thinker(t_philosopher *philo)
 
 void	*do_routine(void *arg)
 {
-	t_philosopher	*philo = (t_philosopher *)arg;
+	t_philosopher	*philo;
+	long long		current_time;
 
+	philo = (t_philosopher *)arg;
 	if (philo->data->nbr_of_philos == 1)
 	{
 		pthread_mutex_lock(&philo->left_fork);
 		print_action(philo, "has taken a fork");
 		usleep(philo->time_to_die * 1000);
+		pthread_mutex_lock(&philo->data->stop_mutex);
+		philo->data->stop_simulation = 1;
+		current_time = timestamp(philo->data->starting_time);
+		printf("%lld %d died\n", current_time, philo->id);
+		pthread_mutex_unlock(&philo->data->stop_mutex);
 		pthread_mutex_unlock(&philo->left_fork);
 		return (NULL);
 	}
-	while (1)
+	else
 	{
-		pthread_mutex_lock(&philo->data->stop_mutex);
-		if (philo->data->stop_simulation)
+		while (1)
 		{
+			if (philo->max_meals > 0)
+			{
+				if (philo->meals_eaten == philo->max_meals)
+					break ;
+				philo->meals_eaten++;
+			}
+			pthread_mutex_lock(&philo->data->stop_mutex);
+			if (philo->data->stop_simulation)
+			{
+				pthread_mutex_unlock(&philo->data->stop_mutex);
+				break;
+			}
 			pthread_mutex_unlock(&philo->data->stop_mutex);
-			break;
+			eater(philo);
+			sleeper(philo);
+			thinker(philo);
 		}
-		pthread_mutex_unlock(&philo->data->stop_mutex);
-
-		eater(philo);
-		sleeper(philo);
-		thinker(philo);
 	}
 	return (NULL);
 }
@@ -137,23 +172,22 @@ static int	init_threads(t_data *data)
 	return (1);
 }
 
-int	run_simulation(t_data *data)
+void	run_simulation(t_data *data)
 {
 	pthread_t	monitor;
 	int	i;
 
 	i = 0;
 	if (!init_threads(data))
-		return (0);
+		return ;
 	if (pthread_create(&monitor, NULL, monitor_routine, data) != 0)
-		return (0);
+		return ;
 	while (i < data->nbr_of_philos)
 	{
 		if (pthread_join(data->threads[i], NULL) != 0)
-			return (0);
+			return ;
 		i++;
 	}
 	pthread_join(monitor, NULL);
-	free(data->threads);
-	return (1);
+	return ;
 }
