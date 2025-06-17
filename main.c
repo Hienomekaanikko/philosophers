@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 14:56:18 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/17 11:41:19 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 13:34:39 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 static int	init_philosopher(t_philosopher *philo, t_data *data, pthread_mutex_t *right_fork)
 {
 	pthread_mutex_init(&philo->last_meal_mutex, NULL);
+	pthread_mutex_init(&philo->meals_eaten_mutex, NULL);
 	philo->right_fork = right_fork;
 	philo->dead = 0;
 	philo->data = data;

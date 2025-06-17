@@ -6,11 +6,24 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 14:56:33 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/17 11:57:31 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 14:00:22 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
+
+void	eat_status(t_data *data, int *all_ate, int *i)
+{
+	if (data->max_meals > 0 && data->nbr_of_philos > 1)
+	{
+		pthread_mutex_lock(&data->philo[*i].meals_eaten_mutex);
+		if (data->philo[*i].meals_eaten == data->max_meals)
+			*all_ate = 1;
+		else
+			*all_ate = 0;
+		pthread_mutex_unlock(&data->philo[*i].meals_eaten_mutex);
+	}
+}
 
 void	print_action(t_philosopher *philo, const char *msg)
 {
@@ -45,12 +58,7 @@ void	*monitor_routine(void *arg)
 		while (i < data->nbr_of_philos)
 		{
 			if (data->max_meals > 0 && data->nbr_of_philos > 1)
-			{
-				if (data->philo->meals_eaten == data->max_meals)
-					all_ate = 1;
-				else
-					all_ate = 0;
-			}
+				eat_status(data, &all_ate, &i);
 			pthread_mutex_lock(&data->philo[i].last_meal_mutex);
 			current_time = timestamp(data->starting_time);
 			if (current_time - data->philo[i].last_meal_time > data->time_to_die)
@@ -58,7 +66,7 @@ void	*monitor_routine(void *arg)
 				pthread_mutex_lock(&data->stop_mutex);
 				data->stop_simulation = 1;
 				pthread_mutex_unlock(&data->stop_mutex);
-				print_action(&data->philo[i], "died");
+				printf("%lld %d died\n", current_time, data->philo[i].id);
 				pthread_mutex_unlock(&data->philo[i].last_meal_mutex);
 				return (NULL);
 			}
@@ -138,7 +146,9 @@ void	*do_routine(void *arg)
 			{
 				if (philo->meals_eaten == philo->max_meals)
 					break ;
+				pthread_mutex_lock(&philo->meals_eaten_mutex);
 				philo->meals_eaten++;
+				pthread_mutex_unlock(&philo->meals_eaten_mutex);
 			}
 			pthread_mutex_lock(&philo->data->stop_mutex);
 			if (philo->data->stop_simulation)
@@ -157,7 +167,7 @@ void	*do_routine(void *arg)
 
 static int	init_threads(t_data *data)
 {
-	int			i;
+	int	i;
 
 	i = 0;
 	data->threads = malloc(data->nbr_of_philos * sizeof(pthread_t));
@@ -175,7 +185,7 @@ static int	init_threads(t_data *data)
 void	run_simulation(t_data *data)
 {
 	pthread_t	monitor;
-	int	i;
+	int			i;
 
 	i = 0;
 	if (!init_threads(data))
