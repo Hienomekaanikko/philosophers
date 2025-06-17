@@ -6,7 +6,7 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 10:20:06 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/17 13:34:26 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 16:44:30 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,22 +42,23 @@ typedef struct s_philosopher
 	long long			last_meal_time;
 	int					dead;
 	struct s_data		*data;
-} t_philosopher;
+}	t_philo;
 
 typedef struct s_data
 {
-	t_philosopher	*philo;
+	t_philo			*philo;
 	pthread_t		*threads;
 	pthread_mutex_t	stop_mutex;
 	long long		starting_time;
+	char			*msg;
 	int				nbr_of_philos;
-	int				error;
+	int				syntax_error;
 	int				stop_simulation;
 	int				time_to_eat;
 	int				time_to_sleep;
 	int				time_to_die;
 	int				max_meals;
-} t_data;
+}	t_data;
 
 // Parsing
 int			ft_isnum(char *num);
@@ -67,19 +68,29 @@ int			ft_isdigit(int c);
 int			ft_isspace(int c);
 int			arg_check(int argc);
 
-// Starting
-int		validate_input(t_data *data, char **argv);
-void	run_simulation(t_data *data);
-void	*monitor_routine(void *arg);
+// Inits
+int			init_mutex(t_data *data, pthread_mutex_t *mutex);
+int			init_ph(t_philo *philo, t_data *data, pthread_mutex_t *r_fork);
+int			init_philos(t_data *data);
+int			init_base(t_data *data, char **argv, int argc);
 
 // Time
 long long	timestamp(long long starting_time);
 long long	init_time(void);
 
+// Simulation
+int			validate_input(t_data *data, char **argv);
+void		run_simulation(t_data *data);
+void		*monitor_routine(void *arg);
+void		*run(void *arg);
+void		print_action(t_philo *philo, const char *msg);
+void		one_philo_case(t_philo *philo);
+int			increment_meals(t_philo *philo);
+
 // Error
-void	error_message(char *msg, char *arg);
-void	ft_putendl_fd(char *s, int fd);
-void	ft_putstr_fd(const char *s, int fd);
+void		error_message(char *msg, char *arg);
+void		ft_putendl_fd(char *s, int fd);
+void		ft_putstr_fd(const char *s, int fd);
+void		thread_failure_join(t_data *data, int i);
 
 #endif
-

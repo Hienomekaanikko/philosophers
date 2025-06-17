@@ -2,7 +2,7 @@ NAME	= philo
 CC		= cc
 CFLAGS	= -Wall -Wextra -Werror
 
-SRC		= main.c utils.c utils2.c validate_input.c time.c simulation.c
+SRC		= main.c utils.c utils2.c validate_input.c time.c simulation.c monitoring.c routines.c init.c
 OBJS	= $(SRC:.c=.o)
 
 all: $(NAME)

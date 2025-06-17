@@ -6,11 +6,24 @@
 /*   By: msuokas <msuokas@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 13:10:21 by msuokas           #+#    #+#             */
-/*   Updated: 2025/06/16 14:16:24 by msuokas          ###   ########.fr       */
+/*   Updated: 2025/06/17 16:44:04 by msuokas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
+
+void	thread_failure_join(t_data *data, int i)
+{
+	int	j;
+
+	j = 0;
+	while (j <= i)
+	{
+		if (pthread_join(data->threads[j], NULL) != 0)
+			data->msg = "Thread joining failed";
+		j++;
+	}
+}
 
 int	arg_check(int argc)
 {
@@ -50,8 +63,8 @@ long long	ft_atol(const char *s)
 
 	result = 0;
 	sign = 1;
-	while (*s == ' ' || *s == '\t' || *s == '\n' || \
-			*s == '\r' || *s == '\f' || *s == '\v')
+	while (*s == ' ' || *s == '\t' || *s == '\n'
+		|| *s == '\r' || *s == '\f' || *s == '\v')
 		s++;
 	if (*s == '-' || *s == '+')
 	{
@@ -74,4 +87,3 @@ void	error_message(char *msg, char *arg)
 	ft_putstr_fd(arg, 2);
 	ft_putendl_fd(msg, 2);
 }
-
